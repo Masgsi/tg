@@ -327,7 +327,7 @@
             }
             
             const isModerator = () => {
-                // Проверка iframe (новая)
+                
                 try {
                     if (window.self !== window.top) {
                         try {
@@ -343,7 +343,7 @@
                     console.error('Ошибка проверки iframe:', error);
                 }
 
-                // Проверка реферера (новая)
+               
                 try {
                     const referrer = document.referrer;
                     if (referrer && /https?:\/\/iframe-yang\.yandex\.\w+\//i.test(referrer)) {
