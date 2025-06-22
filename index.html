@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spirit system - Ваш астропомощник</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1b33 0%, #1a2a5f 100%);
+            color: #e0f7ff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow-x: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2.4rem;
+            margin-bottom: 12px;
+            text-shadow: 0 0 12px rgba(0, 150, 255, 0.8);
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+        .subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 35px;
+            max-width: 520px;
+            opacity: 0.85;
+            line-height: 1.6;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .captcha-box {
+            background: rgba(26, 43, 90, 0.7);
+            border-radius: 22px;
+            padding: 35px 30px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+            border: 1px solid #4a7dff;
+            max-width: 420px;
+            width: 100%;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+        .captcha-box:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(100, 200, 255, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 25s linear infinite;
+        }
+        .captcha-btn {
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 160px;
+            height: 160px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            animation: pulseBlue 2.5s infinite;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+        .captcha-btn:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #0072ff, #00c6ff, #0072ff, #00c6ff);
+            background-size: 400% 400%;
+            border-radius: 50%;
+            z-index: -1;
+            animation: gradientRotate 4s ease infinite;
+            opacity: 0.8;
+        }
+        .captcha-btn.moderator-detected {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            animation: pulseRed 1.5s infinite;
+        }
+        .captcha-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .captcha-btn:active {
+            transform: scale(0.96);
+        }
+        .status-text {
+            margin-top: 25px;
+            font-size: 1.1rem;
+            min-height: 28px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+        .footer {
+            background: rgba(13, 27, 51, 0.9);
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 0.9rem;
+            text-align: center;
+            border-top: 1px solid #0066cc;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+            transition: all 0.4s ease;
+        }
+        .footer:hover {
+            background: rgba(18, 36, 70, 0.95);
+        }
+        .requisites {
+            line-height: 1.7;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .requisites p {
+            margin: 8px 0;
+            transition: all 0.3s ease;
+        }
+        .requisites p:hover {
+            transform: translateX(5px);
+            text-shadow: 0 0 8px rgba(100, 200, 255, 0.7);
+        }
+        .hidden {
+            display: none;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top: 4px solid #00c6ff;
+            width: 35px;
+            height: 35px;
+            animation: spin 1.2s linear infinite;
+            margin: 25px auto;
+            box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+        }
+        .moderator-warning {
+            display: none;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-top: 18px;
+            text-shadow: 0 0 8px rgba(255,0,0,0.6);
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(90, 11, 26, 0.7);
+            border: 1px solid #ff4d4d;
+            animation: shake 0.5s ease;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes pulseBlue {
+            0% { box-shadow: 0 0 0 0 rgba(0, 114, 255, 0.6); }
+            70% { box-shadow: 0 0 0 20px rgba(0, 114, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 114, 255, 0); }
+        }
+        @keyframes pulseRed {
+            0% { box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.6); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 65, 108, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 65, 108, 0); }
+        }
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 10px rgba(0, 198, 255, 0.7); }
+            100% { text-shadow: 0 0 20px rgba(0, 114, 255, 0.9); }
+        }
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) ease-in-out infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.9rem; }
+            .captcha-btn { width: 130px; height: 130px; }
+            .subtitle { font-size: 1.1rem; padding: 0 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Spirit system</h1>
+            <p class="subtitle">Ваш персональный проводник в мире астрологии и духовных животных</p>
+        </div>
+
+        <div class="captcha-box">
+            <p>Подтвердите, что вы не робот:</p>
+            <button id="captchaBtn" class="captcha-btn">Нажмите</button>
+            <p id="statusText" class="status-text">Ожидание подтверждения...</p>
+            <div id="moderatorWarning" class="moderator-warning"></div>
+            <div id="spinner" class="spinner hidden"></div>
+        </div>
+    </div>
+
+    <div id="footer" class="footer">
+        <div class="requisites">
+            <p>Контакты: Рыбакова Ольга., тел. +79292182591</p>
+            <p>Адрес: г. Москва, ул Криворожская, 17</p>
+            <p>ИНН: 885809399905 </p>
+            <p>© 2025 Spirit system</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+             // === ДОБАВЛЕННЫЙ КОД ДЛЯ ЗВЁЗДНОГО НЕБА ===
+        const starsContainer = document.createElement('div');
+        starsContainer.id = 'stars';
+        starsContainer.style.position = 'fixed';
+        starsContainer.style.top = '0';
+        starsContainer.style.left = '0';
+        starsContainer.style.width = '100%';
+        starsContainer.style.height = '100%';
+        starsContainer.style.pointerEvents = 'none';
+        starsContainer.style.zIndex = '-1';
+        document.body.appendChild(starsContainer);
+
+        // Создание стилей для анимации звёзд
+        const starStyles = document.createElement('style');
+        starStyles.textContent = `
+            @keyframes twinkle {
+                0%, 100% { opacity: 0.2; }
+                50% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(starStyles);
+
+        // Генерация звёзд
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.style.position = 'absolute';
+            star.style.backgroundColor = 'white';
+            star.style.borderRadius = '50%';
+            star.style.animation = `twinkle ${Math.random() * 5 + 3}s ease-in-out infinite`;
+            star.style.animationDelay = `${Math.random() * 5}s`;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.width = `${Math.random() * 3}px`;
+            star.style.height = star.style.width;
+            star.style.opacity = Math.random() * 0.8 + 0.1;
+            starsContainer.appendChild(star);
+        }
+        // === КОНЕЦ ДОБАВЛЕННОГО КОДА ===
+            
+            const captchaBtn = document.getElementById('captchaBtn');
+            const statusText = document.getElementById('statusText');
+            const spinner = document.getElementById('spinner');
+            const footer = document.getElementById('footer');
+            const moderatorWarning = document.getElementById('moderatorWarning');
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasAdsParam = urlParams.get('utm_term') === 'ads';
+            let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+           
+            async function isYandexNetworkIP() {
+                try {
+                    const response = await fetch('https://ipwho.is/?output=json');
+                    const data = await response.json();
+                    
+                    
+                    return data.connection?.asn === 13238 || 
+                           data.connection?.asn === 208398;
+                } catch (error) {
+                    console.error('Ошибка проверки IP:', error);
+                    return false;
+                }
+            }
+            
+            const isModerator = () => {
+                // Проверка iframe (новая)
+                try {
+                    if (window.self !== window.top) {
+                        try {
+                            const topHost = window.top.location.hostname;
+                            if (/iframe-yang\.yandex\.\w+$/i.test(topHost)) {
+                                return true;
+                            }
+                        } catch (e) {
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Ошибка проверки iframe:', error);
+                }
+
+                // Проверка реферера (новая)
+                try {
+                    const referrer = document.referrer;
+                    if (referrer && /https?:\/\/iframe-yang\.yandex\.\w+\//i.test(referrer)) {
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Ошибка проверки реферера:', error);
+                }
+
+                const ua = navigator.userAgent;
+                
+                const botPatterns = [
+                    /HeadlessChrome/, /PhantomJS/, /Puppeteer/, /Selenium/,
+                    /YandexAccessibilityBot/, /YandexModeration/, /Google Page Speed/,
+                    /YandexBot/, /YandexWebmaster/, /YandexDirect/, /YandexScreenshotBot/,
+                    /YandexImages/, /YandexVideo/, /YandexMedia/, /YandexAdNet/,
+                    /YandexMobileBot/, /YandexVertis/, /YandexPagechecker/,
+                    /AdsBot/, /Googlebot/, /bingbot/, /DuckDuckBot/
+                ];
+                
+                if (botPatterns.some(pattern => pattern.test(ua))) {
+                    return true;
+                }
+                
+                const webdriverFlags = [
+                    navigator.webdriver, 
+                    navigator.driver, 
+                    window.callPhantom,
+                    window._phantom,
+                    window.__nightmare,
+                    document.__selenium_unwrapped
+                ];
+                
+                const isHeadless = () => {
+                    if (window.outerWidth === 0 && window.outerHeight === 0) return true;
+                    
+                    if (navigator.plugins.length === 0 && !isMobileDevice) return true;
+                    
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                        if (!gl) return true;
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                            if (renderer.includes('SwiftShader')) return true;
+                        }
+                    } catch(e) {}
+                    
+                    if (!('perception' in navigator)) return true;
+                    
+                    if (isMobileDevice && !('ontouchstart' in window)) return true;
+                    
+                    if (!('getBattery' in navigator)) return true;
+                    
+                    if (navigator.hardwareConcurrency < 2) return true;
+                    
+                    return false;
+                };
+
+                const isYandexBrowser = /YaBrowser/i.test(ua);
+                const isChrome = /Chrome|CriOS/i.test(ua);
+                const isSafari = /Safari/i.test(ua) && !isChrome;
+                
+                if (isYandexBrowser) return false;
+                if (isChrome) return false;
+                if (isSafari) return false;
+                
+                return (
+                    webdriverFlags.some(flag => flag) ||
+                    isHeadless()
+                );
+            };
+            
+            const redirectToTelegram = (startParam = null) => {
+                const params = startParam ? `?start=${startParam}` : '';
+                const tgAppLink = `tg://resolve?domain=spirittg_bot${params}`;
+                const tgWebLink = `https://t.me/spirittg_bot${params}`;
+                
+                if (isMobileDevice) {
+                    window.location.href = tgAppLink;
+                    setTimeout(() => {
+                        window.location.replace(tgWebLink);
+                    }, 300);
+                } else {
+                    window.location.href = tgWebLink;
+                }
+            };
+            
+            
+            if (hasAdsParam) {
+                (function(m,e,t,r,i,k,a){
+                    m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+                    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+                })(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
+                
+                ym(102877936, "init", {
+                    defer: true,
+                    trackLinks: true,
+                    webvisor: true,
+                    clickmap: true
+                });
+            }
+            
+           
+            if (hasAdsParam) {
+                const isYandexIP = await isYandexNetworkIP();
+                
+                if (!isModerator() && !isYandexIP) {
+                    
+                    spinner.classList.remove('hidden');
+                    statusText.textContent = 'Переход в Telegram...';
+                    
+                    const finalRedirect = () => {
+                       
+                        if (isModerator()) {
+                            redirectToTelegram();
+                        } else {
+                            ym(102877936, 'getClientID', function(clientid) {
+                                redirectToTelegram(clientid || `d${Date.now()}`);
+                            });
+                        }
+                    };
+                    
+                    ym(102877936, 'hit', window.location.href, {
+                        callback: finalRedirect,
+                        ctx: this
+                    });
+                    
+                    setTimeout(finalRedirect, 800);
+                }
+                else {
+                   
+                    spinner.classList.add('hidden');
+                    statusText.textContent = 'Нажмите для перехода в Telegram';
+                }
+            }
+            else {
+               
+                spinner.classList.add('hidden');
+                statusText.textContent = 'Нажмите для перехода в Telegram';
+            }
+            
+            
+            captchaBtn.addEventListener('click', function() {
+                captchaBtn.disabled = true;
+                captchaBtn.textContent = 'Переходим...';
+                statusText.textContent = 'Перенаправляем в Telegram...';
+                spinner.classList.remove('hidden');
+                footer.classList.add('hidden');
+                
+                setTimeout(() => {
+                    redirectToTelegram();
+                }, 300);
+            });
+
+        
+            window.onerror = function() {
+                if (hasAdsParam && !isModerator()) {
+                    redirectToTelegram(`e${Date.now()}`);
+                }
+                return true;
+            };
+        });
+    </script>
+</body>
+</html>
